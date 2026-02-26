@@ -9,6 +9,8 @@ type Article = {
   readTime?: string;
   url?: string;
 };
+
+const ARTICLES_STORAGE_KEY = 'fattakhov_articles_v1';
 import { motion } from 'motion/react';
 import { ArrowRight, Calculator, TrendingDown, Users, Zap, BarChart3, ChevronRight, X, Globe, Search, Play, Share2, Copy, Mail, Twitter, Linkedin, Loader2, Pencil, Trash2, Calendar, Clock } from 'lucide-react';
 
@@ -492,9 +494,10 @@ const AdminPanel = ({
           <X className="w-6 h-6" />
         </button>
         
-        <h3 className="text-2xl font-display font-bold text-white mb-6">
+        <h3 className="text-2xl font-display font-bold text-white mb-2">
           {editingId ? 'Редактировать статью' : 'Админ Панель'}
         </h3>
+        <p className="text-xs text-white/60 mb-6">Изменения статей сохраняются автоматически в браузере (local storage).</p>
 
         <div className="grid md:grid-cols-2 gap-8 overflow-hidden h-full">
           {/* Form Section */}
@@ -1039,6 +1042,22 @@ export default function App() {
 
   useEffect(() => {
     let alive = true;
+
+    const localRaw = localStorage.getItem(ARTICLES_STORAGE_KEY);
+    if (localRaw) {
+      try {
+        const localData = JSON.parse(localRaw) as Article[];
+        if (Array.isArray(localData) && localData.length > 0) {
+          setArticles(localData);
+          return () => {
+            alive = false;
+          };
+        }
+      } catch {
+        // ignore broken local cache
+      }
+    }
+
     fetch('/content/articles.json')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('articles fetch failed'))))
       .then((data: Article[]) => {
@@ -1073,6 +1092,14 @@ export default function App() {
   const handleDeleteArticle = (id: number) => {
     setArticles(prev => prev.filter(article => article.id !== id));
   };
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ARTICLES_STORAGE_KEY, JSON.stringify(articles));
+    } catch {
+      // ignore storage failures
+    }
+  }, [articles]);
 
   return (
     <div className="min-h-screen bg-desert relative text-white selection:bg-white/30">
