@@ -1,18 +1,72 @@
+const rateStore = globalThis.__leadRateStore || new Map();
+globalThis.__leadRateStore = rateStore;
+
+const WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 5;
+
+function isValidContact(value) {
+  const v = String(value || '').trim();
+  const email = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  const telegram = /^@?[a-zA-Z0-9_]{5,32}$/;
+  const phone = /^\+?[0-9\s\-()]{10,18}$/;
+  return email.test(v) || telegram.test(v) || phone.test(v);
+}
+
+function getClientKey(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (typeof xff === 'string' && xff.length) return xff.split(',')[0].trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function hitRateLimit(key) {
+  const now = Date.now();
+  const bucket = (rateStore.get(key) || []).filter((ts) => now - ts < WINDOW_MS);
+  bucket.push(now);
+  rateStore.set(key, bucket);
+  return bucket.length > MAX_REQUESTS_PER_WINDOW;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
   try {
-    const { name, contact, source } = req.body || {};
+    const { name, contact, source, company, formOpenedAt, submittedAt } = req.body || {};
 
-    if (!name || !contact) {
+    const trimmedName = String(name || '').trim();
+    const trimmedContact = String(contact || '').trim();
+
+    if (!trimmedName || !trimmedContact) {
       return res.status(400).json({ ok: false, error: 'name and contact are required' });
     }
 
+    if (trimmedName.length < 2 || trimmedName.length > 80) {
+      return res.status(400).json({ ok: false, error: 'invalid name length' });
+    }
+
+    if (trimmedContact.length < 5 || trimmedContact.length > 120 || !isValidContact(trimmedContact)) {
+      return res.status(400).json({ ok: false, error: 'invalid contact format' });
+    }
+
+    if (company && String(company).trim()) {
+      return res.status(400).json({ ok: false, error: 'spam detected' });
+    }
+
+    const opened = Number(formOpenedAt || 0);
+    const submitted = Number(submittedAt || Date.now());
+    if (!opened || submitted - opened < 2500) {
+      return res.status(429).json({ ok: false, error: 'submitted too quickly' });
+    }
+
+    const clientKey = getClientKey(req);
+    if (hitRateLimit(clientKey)) {
+      return res.status(429).json({ ok: false, error: 'too many requests' });
+    }
+
     const payload = {
-      name: String(name).trim(),
-      contact: String(contact).trim(),
+      name: trimmedName,
+      contact: trimmedContact,
       source: source || 'website',
       createdAt: new Date().toISOString(),
     };

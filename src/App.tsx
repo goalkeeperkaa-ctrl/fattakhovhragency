@@ -776,12 +776,56 @@ const MainDashboard = ({ onOpenModal, onOpenCalculator }: { onOpenModal: () => v
 const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
+  const [company, setCompany] = useState(''); // honeypot
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorText, setErrorText] = useState('');
+  const [openedAt] = useState(() => Date.now());
+
+  const isValidContact = (value: string) => {
+    const v = value.trim();
+    const email = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+    const telegram = /^@?[a-zA-Z0-9_]{5,32}$/;
+    const phone = /^\+?[0-9\s\-()]{10,18}$/;
+    return email.test(v) || telegram.test(v) || phone.test(v);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !contact.trim()) return;
+    setErrorText('');
+
+    const trimmedName = name.trim();
+    const trimmedContact = contact.trim();
+
+    if (!trimmedName || !trimmedContact) {
+      setStatus('error');
+      setErrorText('Заполни имя и контакты.');
+      return;
+    }
+
+    if (trimmedName.length < 2 || trimmedName.length > 80) {
+      setStatus('error');
+      setErrorText('Имя должно быть от 2 до 80 символов.');
+      return;
+    }
+
+    if (trimmedContact.length < 5 || trimmedContact.length > 120 || !isValidContact(trimmedContact)) {
+      setStatus('error');
+      setErrorText('Укажи корректный email / Telegram / телефон.');
+      return;
+    }
+
+    if (company.trim()) {
+      setStatus('error');
+      setErrorText('Spam check failed.');
+      return;
+    }
+
+    if (Date.now() - openedAt < 2500) {
+      setStatus('error');
+      setErrorText('Слишком быстро. Попробуй ещё раз через пару секунд.');
+      return;
+    }
 
     setSubmitting(true);
     setStatus('idle');
@@ -790,7 +834,14 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
       const response = await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, contact, source: 'audit_modal' }),
+        body: JSON.stringify({
+          name: trimmedName,
+          contact: trimmedContact,
+          source: 'audit_modal',
+          company,
+          formOpenedAt: openedAt,
+          submittedAt: Date.now(),
+        }),
       });
 
       if (!response.ok) throw new Error('Lead request failed');
@@ -798,9 +849,11 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
       setStatus('success');
       setName('');
       setContact('');
+      setCompany('');
       setTimeout(() => onClose(), 1000);
     } catch (error) {
       setStatus('error');
+      setErrorText('Не удалось отправить заявку. Попробуй ещё раз.');
     } finally {
       setSubmitting(false);
     }
@@ -843,12 +896,17 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
               onChange={(e) => setContact(e.target.value)}
               required
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors"
-              placeholder="Email или Telegram"
+              placeholder="Email / @telegram / телефон"
             />
           </div>
 
+          <div className="hidden" aria-hidden="true">
+            <label>Company</label>
+            <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} tabIndex={-1} autoComplete="off" />
+          </div>
+
           {status === 'success' && <p className="text-green-400 text-sm">Заявка отправлена. Мы скоро свяжемся.</p>}
-          {status === 'error' && <p className="text-red-400 text-sm">Не удалось отправить заявку. Попробуйте ещё раз.</p>}
+          {status === 'error' && <p className="text-red-400 text-sm">{errorText || 'Не удалось отправить заявку. Попробуйте ещё раз.'}</p>}
 
           <button
             disabled={submitting}
