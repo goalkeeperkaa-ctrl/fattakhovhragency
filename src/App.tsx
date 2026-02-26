@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, Calculator, CheckCircle, TrendingDown, Users, Zap, BarChart3, ChevronRight, X, Menu, Globe, Search, ShoppingBag, Play, Share2, Copy, Mail, Twitter, Linkedin, Loader2, MessageSquare, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRight, Calculator, TrendingDown, Users, Zap, BarChart3, ChevronRight, X, Globe, Search, Play, Share2, Copy, Mail, Twitter, Linkedin, Loader2, Pencil, Trash2, Calendar, Clock } from 'lucide-react';
 
 // --- Components ---
 
@@ -306,15 +306,14 @@ const CasesSection = () => (
 const MediaSection = ({ articles, setArticles }: { articles: any[], setArticles: React.Dispatch<React.SetStateAction<any[]>> }) => {
   const [loading, setLoading] = useState(false);
   const [sharingArticle, setSharingArticle] = useState<any>(null);
-  const [commentingArticle, setCommentingArticle] = useState<any>(null);
 
   const moreArticlesPool = [
-    { title: "Новые метрики эффективности в эпоху удаленки", category: "АНАЛИТИКА" },
-    { title: "Психология лидерства: от контроля к вдохновению", category: "LEADERSHIP" },
-    { title: "Автоматизация рекрутинга: кейс внедрения", category: "CASE STUDY" },
-    { title: "Корпоративная культура как актив", category: "CULTURE" },
-    { title: "Soft skills vs Hard skills: что важнее в 2025", category: "SKILLS" },
-    { title: "Как удержать таланты без повышения зарплаты", category: "RETENTION" }
+    { title: "Новые метрики эффективности команд в 2026", category: "АНАЛИТИКА", readTime: "6 мин", date: "26 фев 2026" },
+    { title: "Как сократить рутину отдела продаж без найма", category: "ПРАКТИКА", readTime: "4 мин", date: "25 фев 2026" },
+    { title: "Автоматизация рекрутинга: структура внедрения за 30 дней", category: "CASE STUDY", readTime: "7 мин", date: "24 фев 2026" },
+    { title: "Когда AI помогает, а когда мешает: честный разбор", category: "МНЕНИЕ", readTime: "5 мин", date: "23 фев 2026" },
+    { title: "Как повысить конверсию лидов за счет скорости ответа", category: "GROWTH", readTime: "5 мин", date: "22 фев 2026" },
+    { title: "7 ошибок внедрения автоматизации в SMB", category: "ГАЙД", readTime: "8 мин", date: "21 фев 2026" }
   ];
 
   const loadMore = () => {
@@ -328,7 +327,10 @@ const MediaSection = ({ articles, setArticles }: { articles: any[], setArticles:
           id: currentCount + i + 1,
           title: template.title,
           image: `https://picsum.photos/seed/insight${currentCount + i + 1}/800/600`,
-          category: template.category
+          category: template.category,
+          readTime: template.readTime,
+          date: template.date,
+          url: '#'
         };
       });
       
@@ -365,12 +367,6 @@ const MediaSection = ({ articles, setArticles }: { articles: any[], setArticles:
                 />
                 <div className="absolute top-4 right-4 flex gap-2 z-20 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 duration-300 transition-all">
                   <button 
-                    onClick={(e) => { e.stopPropagation(); setCommentingArticle(article); }}
-                    className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white/80 hover:bg-white hover:text-black transition-all"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                  </button>
-                  <button 
                     onClick={(e) => { e.stopPropagation(); setSharingArticle(article); }}
                     className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white/80 hover:bg-white hover:text-black transition-all"
                   >
@@ -380,11 +376,15 @@ const MediaSection = ({ articles, setArticles }: { articles: any[], setArticles:
               </div>
               <div className="p-6 flex flex-col flex-grow">
                 <div className="text-xs text-white/40 mb-2 tracking-wider font-medium">{article.category}</div>
-                <h3 className="text-lg font-bold mb-4 group-hover:text-white/90 transition-colors line-clamp-2 flex-grow">
+                <h3 className="text-lg font-bold mb-3 group-hover:text-white/90 transition-colors line-clamp-2 flex-grow">
                   {article.title}
                 </h3>
-                <div className="flex items-center gap-2 text-xs font-medium text-white/60 group-hover:text-white transition-colors mt-auto">
-                  Читать <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center gap-3 text-[11px] text-white/60 mb-3">
+                  <span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" /> {article.date || '26 фев 2026'}</span>
+                  <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" /> {article.readTime || '5 мин'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-medium text-white/70 group-hover:text-white transition-colors mt-auto">
+                  Читать материал <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </motion.div>
@@ -410,7 +410,6 @@ const MediaSection = ({ articles, setArticles }: { articles: any[], setArticles:
       </div>
       
       <ShareModal isOpen={!!sharingArticle} onClose={() => setSharingArticle(null)} article={sharingArticle} />
-      <CommentModal isOpen={!!commentingArticle} onClose={() => setCommentingArticle(null)} article={commentingArticle} />
     </section>
   );
 };
@@ -1000,19 +999,28 @@ export default function App() {
       id: 1,
       title: "Как AI меняет структуру современных HR-департаментов",
       image: "https://picsum.photos/seed/insight1/800/600",
-      category: "AI & TECH"
+      category: "AI & TECH",
+      date: "26 фев 2026",
+      readTime: "6 мин",
+      url: '#'
     },
     {
       id: 2,
       title: "5 признаков того, что ваша команда теряет эффективность",
       image: "https://picsum.photos/seed/insight2/800/600",
-      category: "МЕНЕДЖМЕНТ"
+      category: "МЕНЕДЖМЕНТ",
+      date: "25 фев 2026",
+      readTime: "5 мин",
+      url: '#'
     },
     {
       id: 3,
       title: "Будущее найма: почему резюме больше не работают",
       image: "https://picsum.photos/seed/insight3/800/600",
-      category: "ТРЕНДЫ"
+      category: "ТРЕНДЫ",
+      date: "24 фев 2026",
+      readTime: "7 мин",
+      url: '#'
     }
   ]);
 
