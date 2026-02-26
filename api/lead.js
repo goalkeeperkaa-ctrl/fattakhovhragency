@@ -29,11 +29,40 @@ export default async function handler(req, res) {
       if (!upstream.ok) {
         return res.status(502).json({ ok: false, error: 'Webhook delivery failed' });
       }
-    } else {
-      console.log('[lead] LEAD_WEBHOOK_URL is not set; received lead:', payload);
+
+      return res.status(200).json({ ok: true });
     }
 
-    return res.status(200).json({ ok: true });
+    const botToken = process.env.TG_BOT_TOKEN;
+    const chatId = process.env.TG_CHAT_ID;
+
+    if (botToken && chatId) {
+      const text = [
+        '🔔 Новая заявка с сайта',
+        `Имя: ${payload.name}`,
+        `Контакт: ${payload.contact}`,
+        `Источник: ${payload.source}`,
+        `Время: ${payload.createdAt}`,
+      ].join('\n');
+
+      const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+        }),
+      });
+
+      if (!tgRes.ok) {
+        return res.status(502).json({ ok: false, error: 'Telegram delivery failed' });
+      }
+
+      return res.status(200).json({ ok: true });
+    }
+
+    console.log('[lead] No delivery destination set. Received lead:', payload);
+    return res.status(200).json({ ok: true, warning: 'No destination configured' });
   } catch (error) {
     console.error('[lead] error', error);
     return res.status(500).json({ ok: false, error: 'Internal server error' });

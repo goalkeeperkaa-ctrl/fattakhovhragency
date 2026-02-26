@@ -19,7 +19,8 @@ Landing + content blocks for HR/AI consulting.
    ```
 
 ## Environment variables
-- `LEAD_WEBHOOK_URL` — where lead form data is sent from `/api/lead`
+- `LEAD_WEBHOOK_URL` — primary destination where lead form data is sent from `/api/lead`
+- `TG_BOT_TOKEN` + `TG_CHAT_ID` — fallback delivery to Telegram if webhook is not set
 - `VITE_ADMIN_ENABLED` — `true/false`, toggles client-side admin UI
 - `APP_URL` — public URL
 
