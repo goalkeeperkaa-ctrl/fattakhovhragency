@@ -7,7 +7,7 @@ import { ArrowRight, Calculator, CheckCircle, TrendingDown, Users, Zap, BarChart
 const ShareModal = ({ isOpen, onClose, article }: { isOpen: boolean, onClose: () => void, article: any }) => {
   if (!isOpen || !article) return null;
 
-  const shareUrl = `https://fattakhov.agency/insights/${article.id}`;
+  const shareUrl = `${window.location.origin}/insights/${article.id}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -573,7 +573,7 @@ const AdminPanel = ({
   );
 };
 
-const NavPill = ({ onOpenAdmin }: { onOpenAdmin: () => void }) => {
+const NavPill = ({ onOpenAdmin, adminEnabled }: { onOpenAdmin: () => void, adminEnabled: boolean }) => {
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -595,10 +595,14 @@ const NavPill = ({ onOpenAdmin }: { onOpenAdmin: () => void }) => {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <button onClick={onOpenAdmin} className="text-xs font-medium text-white/70 hover:text-white transition-colors uppercase tracking-widest">
-          Admin
-        </button>
-        <div className="w-px h-4 bg-white/20"></div>
+        {adminEnabled && (
+          <>
+            <button onClick={onOpenAdmin} className="text-xs font-medium text-white/70 hover:text-white transition-colors uppercase tracking-widest">
+              Admin
+            </button>
+            <div className="w-px h-4 bg-white/20"></div>
+          </>
+        )}
         <Globe className="w-5 h-5 text-white/70 hover:text-white cursor-pointer" />
         <div className="w-px h-4 bg-white/20"></div>
         <div className="text-xs font-medium text-white/70">ОСН. 2024</div>
@@ -770,6 +774,38 @@ const MainDashboard = ({ onOpenModal, onOpenCalculator }: { onOpenModal: () => v
 };
 
 const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !contact.trim()) return;
+
+    setSubmitting(true);
+    setStatus('idle');
+
+    try {
+      const response = await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, contact, source: 'audit_modal' }),
+      });
+
+      if (!response.ok) throw new Error('Lead request failed');
+
+      setStatus('success');
+      setName('');
+      setContact('');
+      setTimeout(() => onClose(), 1000);
+    } catch (error) {
+      setStatus('error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
@@ -787,17 +823,38 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
           <h3 className="text-3xl font-display font-bold text-white">Запрос аудита</h3>
         </div>
 
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Запрос отправлен'); onClose(); }}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-xs font-medium text-white/60 mb-2 uppercase tracking-wider">Имя</label>
-            <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" placeholder="Введите ваше имя" />
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors"
+              placeholder="Введите ваше имя"
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-white/60 mb-2 uppercase tracking-wider">Контакты</label>
-            <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" placeholder="Email или Telegram" />
+            <input
+              type="text"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors"
+              placeholder="Email или Telegram"
+            />
           </div>
-          <button className="w-full bg-white text-black font-bold py-4 rounded-xl mt-4 hover:bg-gray-200 transition-colors">
-            ОТПРАВИТЬ ЗАПРОС
+
+          {status === 'success' && <p className="text-green-400 text-sm">Заявка отправлена. Мы скоро свяжемся.</p>}
+          {status === 'error' && <p className="text-red-400 text-sm">Не удалось отправить заявку. Попробуйте ещё раз.</p>}
+
+          <button
+            disabled={submitting}
+            className="w-full bg-white text-black font-bold py-4 rounded-xl mt-4 hover:bg-gray-200 transition-colors disabled:opacity-60"
+          >
+            {submitting ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ ЗАПРОС'}
           </button>
         </form>
       </motion.div>
@@ -806,6 +863,7 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
 };
 
 export default function App() {
+  const adminEnabled = import.meta.env.VITE_ADMIN_ENABLED === 'true';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -851,7 +909,7 @@ export default function App() {
     <div className="min-h-screen bg-desert relative text-white selection:bg-white/30">
       <div className="fixed inset-0 bg-black/40 -z-10" /> {/* Overlay for readability */}
       
-      <NavPill onOpenAdmin={() => setIsAdminOpen(true)} />
+      <NavPill onOpenAdmin={() => setIsAdminOpen(true)} adminEnabled={adminEnabled} />
       
       <MainDashboard 
         onOpenModal={() => setIsModalOpen(true)} 
@@ -866,14 +924,16 @@ export default function App() {
       
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <CalculatorModal isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} />
-      <AdminPanel 
-        isOpen={isAdminOpen} 
-        onClose={() => setIsAdminOpen(false)} 
-        articles={articles}
-        onAddArticle={handleAddArticle} 
-        onEditArticle={handleEditArticle}
-        onDeleteArticle={handleDeleteArticle}
-      />
+      {adminEnabled && (
+        <AdminPanel 
+          isOpen={isAdminOpen} 
+          onClose={() => setIsAdminOpen(false)} 
+          articles={articles}
+          onAddArticle={handleAddArticle} 
+          onEditArticle={handleEditArticle}
+          onDeleteArticle={handleDeleteArticle}
+        />
+      )}
     </div>
   );
 }

@@ -1,20 +1,35 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# FATTAKHOV HR Agency — website
 
-# Run and deploy your AI Studio app
+Landing + content blocks for HR/AI consulting.
 
-This contains everything you need to run your app locally.
+## Stack
+- React 19 + Vite
+- Tailwind CSS v4
+- Vercel (static + serverless function `/api/lead`)
 
-View your app in AI Studio: https://ai.studio/apps/6f6d64cf-a0b8-4fd0-a022-4075eaa766ee
+## Local run
+1. Install deps:
+   ```bash
+   npm install
+   ```
+2. Create `.env.local` from `.env.example` and fill values.
+3. Run dev server:
+   ```bash
+   npm run dev
+   ```
 
-## Run Locally
+## Environment variables
+- `LEAD_WEBHOOK_URL` — where lead form data is sent from `/api/lead`
+- `VITE_ADMIN_ENABLED` — `true/false`, toggles client-side admin UI
+- `APP_URL` — public URL
 
-**Prerequisites:**  Node.js
+## Production checks
+```bash
+npm run lint
+npm run build
+```
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Notes
+- Admin panel is disabled by default in production.
+- Lead form is connected to `/api/lead` (no fake alert submit).
+- `vercel.json` keeps `/api/*` routes and rewrites all other routes to SPA.
