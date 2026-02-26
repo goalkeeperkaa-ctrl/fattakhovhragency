@@ -281,8 +281,8 @@ const CasesSection = () => (
 
       <div className="grid md:grid-cols-2 gap-6">
         {[
-          { title: "IT-Компания", res: "4.2M ₽", desc: "Экономия за счет внедрения AI-онбординга" },
-          { title: "Ритейл Сеть", res: "-70%", desc: "Сокращение времени найма линейного персонала" }
+          { title: "IT-компания (120+ сотрудников)", res: "4.2M ₽/год", desc: "Сократили потери на онбординге и адаптации после внедрения AI-воркфлоу за 6 недель" },
+          { title: "Ритейл-сеть (28 точек)", res: "-70% к сроку найма", desc: "Пересобрали рекрутинг-процесс и автоматизировали воронку кандидатов за 30 дней" }
         ].map((item, i) => (
           <div key={i} className="glass-panel p-8 rounded-3xl flex flex-col justify-between min-h-[300px] relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -656,8 +656,8 @@ const MainDashboard = ({ onOpenModal, onOpenCalculator }: { onOpenModal: () => v
             <div className="font-display text-6xl md:text-8xl font-light leading-none text-white/90">01</div>
             <div className="pt-2">
               <div className="text-[10px] uppercase tracking-[0.2em] text-white/50 mb-1">FATTAKHOV HR Agency</div>
-              <div className="text-sm font-medium text-white/80 max-w-[200px]">
-                Где ваш бизнес теряет деньги из-за неэффективности команды?
+              <div className="text-sm font-medium text-white/90 max-w-[280px] leading-relaxed">
+                Снижаем рутину команды на 30%+ за 14 дней без замены вашей CRM/1С.
               </div>
             </div>
           </div>
@@ -668,7 +668,7 @@ const MainDashboard = ({ onOpenModal, onOpenCalculator }: { onOpenModal: () => v
               AI Агенты: <span className="text-white">Активны</span>
             </div>
             <GlassButton className="bg-white text-black hover:bg-white/90" onClick={onOpenModal}>
-              Заказать аудит
+              Получить аудит за 15 минут
             </GlassButton>
           </div>
         </div>
@@ -743,10 +743,15 @@ const MainDashboard = ({ onOpenModal, onOpenCalculator }: { onOpenModal: () => v
                    </div>
                 </div>
                 
-                <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">HR АВТОМАТИЗАЦИЯ</h2>
-                <p className="text-white/60 max-w-md mx-auto text-sm">
-                  Замените рутину AI-агентами. Оптимизируйте структуру. Масштабируйте прибыль.
+                <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">АВТОМАТИЗАЦИЯ ОПЕРАЦИОНКИ И ПРОДАЖ</h2>
+                <p className="text-white/80 max-w-xl mx-auto text-sm leading-relaxed">
+                  Внедряем AI-воркфлоу для команд: меньше ручной работы, быстрее обработка заявок, прозрачные цифры по эффективности.
                 </p>
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] uppercase tracking-wider text-white/80">
+                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">Спринт 14 дней</span>
+                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">Без замены CRM/1С</span>
+                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">Метрики до/после</span>
+                </div>
               </div>
 
               {/* Bottom Controls */}
@@ -755,7 +760,7 @@ const MainDashboard = ({ onOpenModal, onOpenCalculator }: { onOpenModal: () => v
                    onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
                    className="px-6 py-3 rounded-full bg-black text-white font-medium text-sm hover:bg-gray-900 transition-colors flex items-center gap-2"
                  >
-                   Изучить решения <ChevronRight className="w-4 h-4" />
+                   Разобрать потери команды <ChevronRight className="w-4 h-4" />
                  </button>
                  <button className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-colors">
                    <Play className="w-4 h-4 fill-current" />
