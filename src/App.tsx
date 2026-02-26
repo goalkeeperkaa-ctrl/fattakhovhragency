@@ -439,8 +439,8 @@ const AdminPanel = ({
   isOpen: boolean, 
   onClose: () => void, 
   articles: Article[], 
-  onAddArticle: (article: { title: string, image: string, category: string }) => Promise<void>,
-  onEditArticle: (id: number, article: { title: string, image: string, category: string }) => Promise<void>,
+  onAddArticle: (article: { title: string, image: string, category: string, date?: string, readTime?: string, url?: string }) => Promise<void>,
+  onEditArticle: (id: number, article: { title: string, image: string, category: string, date?: string, readTime?: string, url?: string }) => Promise<void>,
   onDeleteArticle: (id: number) => Promise<void>,
   adminToken: string,
   setAdminToken: (v: string) => void
@@ -448,6 +448,9 @@ const AdminPanel = ({
   const [title, setTitle] = useState('');
   const [image, setImage] = useState('');
   const [category, setCategory] = useState('');
+  const [date, setDate] = useState('');
+  const [readTime, setReadTime] = useState('5 мин');
+  const [url, setUrl] = useState('#');
   const [editingId, setEditingId] = useState<number | null>(null);
 
   if (!isOpen) return null;
@@ -455,12 +458,16 @@ const AdminPanel = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !image || !category) return;
+    if (url && url !== '#' && !/^https?:\/\//i.test(url)) {
+      alert('URL статьи должен начинаться с http:// или https://');
+      return;
+    }
     try {
       if (editingId) {
-        await onEditArticle(editingId, { title, image, category });
+        await onEditArticle(editingId, { title, image, category, date, readTime, url });
         alert('Статья обновлена!');
       } else {
-        await onAddArticle({ title, image, category });
+        await onAddArticle({ title, image, category, date, readTime, url });
         alert('Статья добавлена!');
       }
       resetForm();
@@ -473,6 +480,9 @@ const AdminPanel = ({
     setTitle(article.title);
     setImage(article.image);
     setCategory(article.category);
+    setDate(article.date || '');
+    setReadTime(article.readTime || '5 мин');
+    setUrl(article.url || '#');
     setEditingId(article.id);
   };
 
@@ -489,6 +499,9 @@ const AdminPanel = ({
     setTitle('');
     setImage('');
     setCategory('');
+    setDate('');
+    setReadTime('5 мин');
+    setUrl('#');
     setEditingId(null);
   };
 
@@ -548,6 +561,20 @@ const AdminPanel = ({
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" 
                   placeholder="AI, МЕНЕДЖМЕНТ..." 
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-white/60 mb-2 uppercase tracking-wider">Дата</label>
+                  <input type="text" value={date} onChange={(e)=>setDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" placeholder="26 фев 2026" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-white/60 mb-2 uppercase tracking-wider">Время чтения</label>
+                  <input type="text" value={readTime} onChange={(e)=>setReadTime(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" placeholder="5 мин" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-white/60 mb-2 uppercase tracking-wider">URL статьи</label>
+                <input type="text" value={url} onChange={(e)=>setUrl(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" placeholder="https://... или #" />
               </div>
               <div className="flex gap-2">
                 <button className="flex-1 bg-white text-black font-bold py-4 rounded-xl mt-4 hover:bg-gray-200 transition-colors">
@@ -1096,12 +1123,12 @@ export default function App() {
     };
   }, []);
 
-  const handleAddArticle = async (newArticle: { title: string, image: string, category: string }) => {
+  const handleAddArticle = async (newArticle: { title: string, image: string, category: string, date?: string, readTime?: string, url?: string }) => {
     const body = {
       ...newArticle,
-      date: new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' }),
-      readTime: '5 мин',
-      url: '#',
+      date: newArticle.date || new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' }),
+      readTime: newArticle.readTime || '5 мин',
+      url: newArticle.url || '#',
     };
     const res = await fetch('/api/articles', {
       method: 'POST',
@@ -1113,7 +1140,7 @@ export default function App() {
     setArticles(data);
   };
 
-  const handleEditArticle = async (id: number, updatedArticle: { title: string, image: string, category: string }) => {
+  const handleEditArticle = async (id: number, updatedArticle: { title: string, image: string, category: string, date?: string, readTime?: string, url?: string }) => {
     const res = await fetch(`/api/articles?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },

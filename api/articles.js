@@ -120,8 +120,10 @@ export default async function handler(req, res) {
       const id = Number(req.query.id);
       if (!id) return res.status(400).json({ ok: false, error: 'id required' });
 
-      const { title, image, category } = req.body || {};
-      const next = articles.map((a) => (a.id === id ? { ...a, title, image, category } : a));
+      const { title, image, category, date, readTime, url } = req.body || {};
+      const next = articles.map((a) =>
+        a.id === id ? { ...a, title, image, category, date: date || a.date, readTime: readTime || a.readTime, url: url || a.url } : a,
+      );
       await saveArticles(next, sha);
       return res.status(200).json(next);
     }
