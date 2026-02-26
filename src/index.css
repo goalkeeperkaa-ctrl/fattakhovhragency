@@ -18,6 +18,8 @@ body {
   background-color: #000;
   color: var(--color-glass-text);
   overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 .bg-desert {
@@ -28,18 +30,19 @@ body {
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(8, 8, 10, 0.52);
+  backdrop-filter: blur(34px) saturate(130%);
+  -webkit-backdrop-filter: blur(34px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(10, 10, 12, 0.58);
+  backdrop-filter: blur(30px) saturate(125%);
+  -webkit-backdrop-filter: blur(30px) saturate(125%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
 .glass-card-hover:hover {
@@ -49,7 +52,17 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
 }
+
+p, span, label, li {
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Improve readability for muted text on photo background */
+.text-white\/60 { color: rgba(255, 255, 255, 0.78) !important; }
+.text-white\/50 { color: rgba(255, 255, 255, 0.72) !important; }
+.text-white\/40 { color: rgba(255, 255, 255, 0.66) !important; }
 
 /* Hide scrollbar for clean look */
 ::-webkit-scrollbar {

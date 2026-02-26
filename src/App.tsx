@@ -907,7 +907,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-desert relative text-white selection:bg-white/30">
-      <div className="fixed inset-0 bg-black/40 -z-10" /> {/* Overlay for readability */}
+      <div className="fixed inset-0 bg-black/55 -z-10" /> {/* Stronger overlay for readability */}
+      <div className="fixed inset-0 -z-10 backdrop-blur-[2px]" />
       
       <NavPill onOpenAdmin={() => setIsAdminOpen(true)} adminEnabled={adminEnabled} />
       
