@@ -22,7 +22,9 @@ Landing + content blocks for HR/AI consulting.
 - `LEAD_WEBHOOK_URL` — primary destination where lead form data is sent from `/api/lead`
 - `TG_BOT_TOKEN` + `TG_CHAT_ID` — fallback delivery to Telegram if webhook is not set (also receives webhook failure alerts)
 - `VITE_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` — optional Cloudflare Turnstile protection
-- `VITE_ADMIN_ENABLED` — `true/false`, toggles client-side admin UI
+- `VITE_ADMIN_ENABLED` — `true/false`, toggles admin UI button
+- `ADMIN_PANEL_TOKEN` — required for article write operations in `/api/articles`
+- `GITHUB_REPO`, `GITHUB_TOKEN`, `GITHUB_BRANCH` — optional but recommended persistence for articles via GitHub file updates (works on Vercel)
 - `APP_URL` — public URL
 
 ## Production checks

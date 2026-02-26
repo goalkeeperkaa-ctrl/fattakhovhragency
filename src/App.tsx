@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
+import { ArrowRight, Calculator, TrendingDown, Users, Zap, BarChart3, ChevronRight, X, Globe, Search, Play, Share2, Copy, Mail, Twitter, Linkedin, Loader2, Pencil, Trash2, Calendar, Clock } from 'lucide-react';
 
 type Article = {
   id: number;
@@ -11,8 +13,6 @@ type Article = {
 };
 
 const ARTICLES_STORAGE_KEY = 'fattakhov_articles_v1';
-import { motion } from 'motion/react';
-import { ArrowRight, Calculator, TrendingDown, Users, Zap, BarChart3, ChevronRight, X, Globe, Search, Play, Share2, Copy, Mail, Twitter, Linkedin, Loader2, Pencil, Trash2, Calendar, Clock } from 'lucide-react';
 
 // --- Components ---
 
@@ -432,14 +432,18 @@ const AdminPanel = ({
   articles, 
   onAddArticle, 
   onEditArticle, 
-  onDeleteArticle 
+  onDeleteArticle,
+  adminToken,
+  setAdminToken
 }: { 
   isOpen: boolean, 
   onClose: () => void, 
   articles: Article[], 
-  onAddArticle: (article: { title: string, image: string, category: string }) => void,
-  onEditArticle: (id: number, article: { title: string, image: string, category: string }) => void,
-  onDeleteArticle: (id: number) => void
+  onAddArticle: (article: { title: string, image: string, category: string }) => Promise<void>,
+  onEditArticle: (id: number, article: { title: string, image: string, category: string }) => Promise<void>,
+  onDeleteArticle: (id: number) => Promise<void>,
+  adminToken: string,
+  setAdminToken: (v: string) => void
 }) => {
   const [title, setTitle] = useState('');
   const [image, setImage] = useState('');
@@ -448,19 +452,21 @@ const AdminPanel = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !image || !category) return;
-    
-    if (editingId) {
-      onEditArticle(editingId, { title, image, category });
-      alert('Статья обновлена!');
-    } else {
-      onAddArticle({ title, image, category });
-      alert('Статья добавлена!');
+    try {
+      if (editingId) {
+        await onEditArticle(editingId, { title, image, category });
+        alert('Статья обновлена!');
+      } else {
+        await onAddArticle({ title, image, category });
+        alert('Статья добавлена!');
+      }
+      resetForm();
+    } catch (err: any) {
+      alert(err?.message || 'Не удалось сохранить статью');
     }
-    
-    resetForm();
   };
 
   const handleEditClick = (article: Article) => {
@@ -470,9 +476,12 @@ const AdminPanel = ({
     setEditingId(article.id);
   };
 
-  const handleDeleteClick = (id: number) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту статью?')) {
-      onDeleteArticle(id);
+  const handleDeleteClick = async (id: number) => {
+    if (!window.confirm('Вы уверены, что хотите удалить эту статью?')) return;
+    try {
+      await onDeleteArticle(id);
+    } catch (err: any) {
+      alert(err?.message || 'Не удалось удалить статью');
     }
   };
 
@@ -497,7 +506,14 @@ const AdminPanel = ({
         <h3 className="text-2xl font-display font-bold text-white mb-2">
           {editingId ? 'Редактировать статью' : 'Админ Панель'}
         </h3>
-        <p className="text-xs text-white/60 mb-6">Изменения статей сохраняются автоматически в браузере (local storage).</p>
+        <p className="text-xs text-white/60 mb-4">Настоящая админка работает через API. Для записи нужен admin token.</p>
+        <input
+          type="password"
+          value={adminToken}
+          onChange={(e) => setAdminToken(e.target.value)}
+          placeholder="Admin token"
+          className="w-full mb-6 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors"
+        />
 
         <div className="grid md:grid-cols-2 gap-8 overflow-hidden h-full">
           {/* Form Section */}
@@ -1007,6 +1023,7 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [adminToken, setAdminToken] = useState('');
 
   const fallbackArticles: Article[] = [
     {
@@ -1043,29 +1060,35 @@ export default function App() {
   useEffect(() => {
     let alive = true;
 
-    const localRaw = localStorage.getItem(ARTICLES_STORAGE_KEY);
-    if (localRaw) {
-      try {
-        const localData = JSON.parse(localRaw) as Article[];
-        if (Array.isArray(localData) && localData.length > 0) {
-          setArticles(localData);
-          return () => {
-            alive = false;
-          };
-        }
-      } catch {
-        // ignore broken local cache
-      }
-    }
-
-    fetch('/content/articles.json')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('articles fetch failed'))))
+    fetch('/api/articles')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('articles api failed'))))
       .then((data: Article[]) => {
         if (!alive || !Array.isArray(data) || data.length === 0) return;
         setArticles(data);
       })
       .catch(() => {
-        // keep fallback articles silently
+        const localRaw = localStorage.getItem(ARTICLES_STORAGE_KEY);
+        if (localRaw) {
+          try {
+            const localData = JSON.parse(localRaw) as Article[];
+            if (Array.isArray(localData) && localData.length > 0) {
+              setArticles(localData);
+              return;
+            }
+          } catch {
+            // ignore broken local cache
+          }
+        }
+
+        fetch('/content/articles.json')
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error('articles fetch failed'))))
+          .then((data: Article[]) => {
+            if (!alive || !Array.isArray(data) || data.length === 0) return;
+            setArticles(data);
+          })
+          .catch(() => {
+            // keep fallback silently
+          });
       });
 
     return () => {
@@ -1073,24 +1096,42 @@ export default function App() {
     };
   }, []);
 
-  const handleAddArticle = (newArticle: { title: string, image: string, category: string }) => {
-    setArticles(prev => [{
-      id: prev.length + 1,
+  const handleAddArticle = async (newArticle: { title: string, image: string, category: string }) => {
+    const body = {
       ...newArticle,
       date: new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' }),
       readTime: '5 мин',
-      url: '#'
-    }, ...prev]);
+      url: '#',
+    };
+    const res = await fetch('/api/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('Неверный токен или ошибка API');
+    const data = (await res.json()) as Article[];
+    setArticles(data);
   };
 
-  const handleEditArticle = (id: number, updatedArticle: { title: string, image: string, category: string }) => {
-    setArticles(prev => prev.map(article => 
-      article.id === id ? { ...article, ...updatedArticle } : article
-    ));
+  const handleEditArticle = async (id: number, updatedArticle: { title: string, image: string, category: string }) => {
+    const res = await fetch(`/api/articles?id=${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+      body: JSON.stringify(updatedArticle),
+    });
+    if (!res.ok) throw new Error('Неверный токен или ошибка API');
+    const data = (await res.json()) as Article[];
+    setArticles(data);
   };
 
-  const handleDeleteArticle = (id: number) => {
-    setArticles(prev => prev.filter(article => article.id !== id));
+  const handleDeleteArticle = async (id: number) => {
+    const res = await fetch(`/api/articles?id=${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': adminToken },
+    });
+    if (!res.ok) throw new Error('Неверный токен или ошибка API');
+    const data = (await res.json()) as Article[];
+    setArticles(data);
   };
 
   useEffect(() => {
@@ -1129,6 +1170,8 @@ export default function App() {
           onAddArticle={handleAddArticle} 
           onEditArticle={handleEditArticle}
           onDeleteArticle={handleDeleteArticle}
+          adminToken={adminToken}
+          setAdminToken={setAdminToken}
         />
       )}
     </div>
