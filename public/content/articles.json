@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "title": "Как AI меняет структуру современных HR-департаментов",
+    "image": "https://picsum.photos/seed/insight1/800/600",
+    "category": "AI & TECH",
+    "date": "26 фев 2026",
+    "readTime": "6 мин",
+    "url": "#"
+  },
+  {
+    "id": 2,
+    "title": "5 признаков того, что ваша команда теряет эффективность",
+    "image": "https://picsum.photos/seed/insight2/800/600",
+    "category": "МЕНЕДЖМЕНТ",
+    "date": "25 фев 2026",
+    "readTime": "5 мин",
+    "url": "#"
+  },
+  {
+    "id": 3,
+    "title": "Будущее найма: почему резюме больше не работают",
+    "image": "https://picsum.photos/seed/insight3/800/600",
+    "category": "ТРЕНДЫ",
+    "date": "24 фев 2026",
+    "readTime": "7 мин",
+    "url": "#"
+  }
+]

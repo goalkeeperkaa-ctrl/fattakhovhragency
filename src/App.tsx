@@ -1,4 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+
+type Article = {
+  id: number;
+  title: string;
+  image: string;
+  category: string;
+  date?: string;
+  readTime?: string;
+  url?: string;
+};
 import { motion } from 'motion/react';
 import { ArrowRight, Calculator, TrendingDown, Users, Zap, BarChart3, ChevronRight, X, Globe, Search, Play, Share2, Copy, Mail, Twitter, Linkedin, Loader2, Pencil, Trash2, Calendar, Clock } from 'lucide-react';
 
@@ -303,9 +313,9 @@ const CasesSection = () => (
   </section>
 );
 
-const MediaSection = ({ articles, setArticles }: { articles: any[], setArticles: React.Dispatch<React.SetStateAction<any[]>> }) => {
+const MediaSection = ({ articles, setArticles }: { articles: Article[], setArticles: React.Dispatch<React.SetStateAction<Article[]>> }) => {
   const [loading, setLoading] = useState(false);
-  const [sharingArticle, setSharingArticle] = useState<any>(null);
+  const [sharingArticle, setSharingArticle] = useState<Article | null>(null);
 
   const moreArticlesPool = [
     { title: "Новые метрики эффективности команд в 2026", category: "АНАЛИТИКА", readTime: "6 мин", date: "26 фев 2026" },
@@ -424,7 +434,7 @@ const AdminPanel = ({
 }: { 
   isOpen: boolean, 
   onClose: () => void, 
-  articles: any[], 
+  articles: Article[], 
   onAddArticle: (article: { title: string, image: string, category: string }) => void,
   onEditArticle: (id: number, article: { title: string, image: string, category: string }) => void,
   onDeleteArticle: (id: number) => void
@@ -451,7 +461,7 @@ const AdminPanel = ({
     resetForm();
   };
 
-  const handleEditClick = (article: any) => {
+  const handleEditClick = (article: Article) => {
     setTitle(article.title);
     setImage(article.image);
     setCategory(article.category);
@@ -994,7 +1004,8 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [articles, setArticles] = useState([
+
+  const fallbackArticles: Article[] = [
     {
       id: 1,
       title: "Как AI меняет структуру современных HR-департаментов",
@@ -1022,12 +1033,34 @@ export default function App() {
       readTime: "7 мин",
       url: '#'
     }
-  ]);
+  ];
+
+  const [articles, setArticles] = useState<Article[]>(fallbackArticles);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/content/articles.json')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('articles fetch failed'))))
+      .then((data: Article[]) => {
+        if (!alive || !Array.isArray(data) || data.length === 0) return;
+        setArticles(data);
+      })
+      .catch(() => {
+        // keep fallback articles silently
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const handleAddArticle = (newArticle: { title: string, image: string, category: string }) => {
     setArticles(prev => [{
       id: prev.length + 1,
-      ...newArticle
+      ...newArticle,
+      date: new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' }),
+      readTime: '5 мин',
+      url: '#'
     }, ...prev]);
   };
 
