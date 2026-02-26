@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, Calculator, CheckCircle, TrendingDown, Users, Zap, BarChart3, ChevronRight, X, Menu, Globe, Search, ShoppingBag, Play, Share2, Copy, Mail, Twitter, Linkedin, Loader2, MessageSquare, Pencil, Trash2 } from 'lucide-react';
 
@@ -774,13 +774,19 @@ const MainDashboard = ({ onOpenModal, onOpenCalculator }: { onOpenModal: () => v
 };
 
 const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+  const turnstileEnabled = Boolean(turnstileSiteKey);
+
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [company, setCompany] = useState(''); // honeypot
+  const [turnstileToken, setTurnstileToken] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorText, setErrorText] = useState('');
   const [openedAt] = useState(() => Date.now());
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
 
   const isValidContact = (value: string) => {
     const v = value.trim();
@@ -789,6 +795,45 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
     const phone = /^\+?[0-9\s\-()]{10,18}$/;
     return email.test(v) || telegram.test(v) || phone.test(v);
   };
+
+  useEffect(() => {
+    if (!isOpen || !turnstileEnabled || !turnstileContainerRef.current) return;
+
+    const renderWidget = () => {
+      const t = (window as any).turnstile;
+      if (!t || !turnstileContainerRef.current || turnstileWidgetIdRef.current) return;
+
+      turnstileWidgetIdRef.current = t.render(turnstileContainerRef.current, {
+        sitekey: turnstileSiteKey,
+        theme: 'dark',
+        callback: (token: string) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(''),
+        'error-callback': () => setTurnstileToken(''),
+      });
+    };
+
+    const existing = document.querySelector('script[src="https://challenges.cloudflare.com/turnstile/v0/api.js"]');
+    if (existing) {
+      renderWidget();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    script.onload = renderWidget;
+    document.body.appendChild(script);
+
+    return () => {
+      const t = (window as any).turnstile;
+      if (turnstileWidgetIdRef.current && t) {
+        t.remove(turnstileWidgetIdRef.current);
+      }
+      turnstileWidgetIdRef.current = null;
+      setTurnstileToken('');
+    };
+  }, [isOpen, turnstileEnabled, turnstileSiteKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -827,6 +872,12 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
       return;
     }
 
+    if (turnstileEnabled && !turnstileToken) {
+      setStatus('error');
+      setErrorText('Подтверди, что ты не робот.');
+      return;
+    }
+
     setSubmitting(true);
     setStatus('idle');
 
@@ -841,6 +892,7 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
           company,
           formOpenedAt: openedAt,
           submittedAt: Date.now(),
+          turnstileToken,
         }),
       });
 
@@ -850,6 +902,13 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
       setName('');
       setContact('');
       setCompany('');
+      setTurnstileToken('');
+
+      const t = (window as any).turnstile;
+      if (turnstileWidgetIdRef.current && t) {
+        t.reset(turnstileWidgetIdRef.current);
+      }
+
       setTimeout(() => onClose(), 1000);
     } catch (error) {
       setStatus('error');
@@ -904,6 +963,12 @@ const Modal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =>
             <label>Company</label>
             <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} tabIndex={-1} autoComplete="off" />
           </div>
+
+          {turnstileEnabled && (
+            <div>
+              <div ref={turnstileContainerRef} className="min-h-[65px]" />
+            </div>
+          )}
 
           {status === 'success' && <p className="text-green-400 text-sm">Заявка отправлена. Мы скоро свяжемся.</p>}
           {status === 'error' && <p className="text-red-400 text-sm">{errorText || 'Не удалось отправить заявку. Попробуйте ещё раз.'}</p>}

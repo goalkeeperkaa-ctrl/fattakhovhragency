@@ -20,7 +20,8 @@ Landing + content blocks for HR/AI consulting.
 
 ## Environment variables
 - `LEAD_WEBHOOK_URL` — primary destination where lead form data is sent from `/api/lead`
-- `TG_BOT_TOKEN` + `TG_CHAT_ID` — fallback delivery to Telegram if webhook is not set
+- `TG_BOT_TOKEN` + `TG_CHAT_ID` — fallback delivery to Telegram if webhook is not set (also receives webhook failure alerts)
+- `VITE_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` — optional Cloudflare Turnstile protection
 - `VITE_ADMIN_ENABLED` — `true/false`, toggles client-side admin UI
 - `APP_URL` — public URL
 
