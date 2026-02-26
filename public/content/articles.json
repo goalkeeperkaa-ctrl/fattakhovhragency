@@ -1,5 +1,14 @@
 [
   {
+    "id": 4,
+    "title": "???? ????? API",
+    "image": "https://picsum.photos/seed/testadmin/800/600",
+    "category": "TEST",
+    "date": "26 ??? 2026",
+    "readTime": "1 ???",
+    "url": "#"
+  },
+  {
     "id": 1,
     "title": "Как AI меняет структуру современных HR-департаментов",
     "image": "https://picsum.photos/seed/insight1/800/600",
